@@ -4,6 +4,31 @@ Use explicit file paths. The public commands do not consult a private track
 catalog, fetch YouTube recordings, or run a hosted LLM. Work in an ignored directory
 such as `build/`; keep raw inputs and every derived stage separately.
 
+## Setup and original example
+
+Python 3.10–3.12 and Node.js 22.15+ are required. From the repository root:
+
+```sh
+python3 -m venv .venv
+# Windows: .venv\Scripts\activate
+. .venv/bin/activate
+python -m pip install -e .
+npm ci
+npx playwright install chromium
+
+slopwave validate examples/lantern/score.json
+slopwave arrange examples/lantern/score.json --profile synth -o build/arranged.json
+slopwave mix build/arranged.json -o build/mixed.json
+slopwave export build/mixed.json -o build/lantern.strudel.js
+npm run check -- build/mixed.json build/lantern.strudel.js
+npm run render -- build/mixed.json build/lantern.strudel.js build/lantern.wav
+```
+
+Installation downloads dependencies and Chromium. Rendering this example afterward
+uses local files only. On Linux, `npx playwright install --with-deps chromium` also
+installs required system libraries. WAV output is a finite pass; the Strudel pattern
+loops. `npm run serve` opens a local preview at the URL printed in the terminal.
+
 ## Review an authored or transcribed score
 
 ```sh

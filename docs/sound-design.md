@@ -47,7 +47,7 @@ presets are not bundled in the pinned local browser runtime; session renders
 require explicit `sample_buffers` instead. The sample path does not add arbitrary
 JavaScript instrument definitions or arbitrary effect graphs to the score format.
 
-The player waits for first-interaction audio initialization before offline rendering
+The player awaits audio initialization on both mouse and keyboard activation before offline rendering
 changes contexts. This prevents a race that unloaded worklets and produced silent
 WAVs for distortion/crush voices. Checks catch Strudel's logged per-note failures,
 worklet warnings and processor errors, and distinguish silent output from clipping.

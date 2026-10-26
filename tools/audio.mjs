@@ -36,7 +36,8 @@ try {
    report.segment_render=await renderSegments(browser,url,score,output);
   } else {
   const downloading=page.waitForEvent('download',{timeout:Math.max(120000,score.loop_seconds*4000)});
-  await page.click('#render');
+  if(process.env.SLOPWAVE_TEST_KEYBOARD==='1') {await page.focus('#render');await page.keyboard.press('Enter');}
+  else await page.click('#render');
   const download=await downloading; await download.saveAs(output);
   assert.equal(await download.failure(),null);
   }

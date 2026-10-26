@@ -72,4 +72,3 @@ def review(data, start, end, audio=None, stem_notes=None, parts=('low', 'middle'
                     'review': 'May be a missing short note, a held-note fragment, or an overtone; amplitude alone cannot decide.'})
     return {'range_seconds': [start, end], 'parts_reviewed': list(parts), 'events': selected, 'findings': findings,
             'policy': 'Review candidates only. No pitches, attacks, holds, voice assignments, or gains have been changed.'}
-

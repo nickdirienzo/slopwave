@@ -84,4 +84,3 @@ def audit(data, features, decoder_notes=(), f0=None):
         percussion_structural_checks=drums, findings=findings,
         policy='Read-only candidates; no pitch ceiling or automatic octave folding.',
         limits='Numerical source review, not a full listening transcription. Percussion checks are structural; backing polyphony makes octave attribution ambiguous.')
-

@@ -68,6 +68,8 @@ browser runner. Paste their generated program into a compatible Strudel editor
 with the requisite samples and verify sample starts before claiming playback.
 The simple bluegrass profile is an early experiment, not the later evidence-driven
 performance profile and not a general style-transfer model.
+It requires an explicit `beat_times_seconds` sequence (at least eight increasing
+pulse times), measured from a recording or supplied by the author of a score.
 
 The Python modules retain the deeper experimental pieces:
 

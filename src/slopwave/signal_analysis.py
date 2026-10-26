@@ -81,6 +81,3 @@ def percussion(audio, bpm):
         result[name] = [[round(float(p*256/SR*bpm/60), 5), .12, 36,
                          round(float(np.clip(flux[p], .25, 1)), 3)] for p in peaks]
     return result
-
-
-

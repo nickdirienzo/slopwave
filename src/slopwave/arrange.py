@@ -141,4 +141,3 @@ def apply_articulation_review(data, review):
         'and a brief neighboring-pitch smoothing; source transcription unchanged.')
     result['arrangement']['articulation_review'] = deepcopy(review)
     return result
-

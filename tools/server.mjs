@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root=fileURLToPath(new URL('..',import.meta.url));
-export async function serve(scorePath='build/mixed.json',sourcePath='build/lantern.strudel.js') {
+export async function serve(scorePath='build/mixed.json',sourcePath='build/lantern.strudel.js',modulePath) {
  const vendor=resolve(root,'node_modules/@strudel/web/dist');
  const server=createServer(async(req,res)=>{
   try {
@@ -11,6 +11,7 @@ export async function serve(scorePath='build/mixed.json',sourcePath='build/lante
    let file;
    if(path==='/') file=resolve(root,'tools/player.html');
    else if(path==='/score.json') file=resolve(scorePath);
+   else if(path==='/song.mjs'&&modulePath) file=resolve(modulePath);
    else if(path==='/score.js') file=resolve(sourcePath);
    else if(path.startsWith('/vendor/')) {
     file=resolve(vendor,decodeURIComponent(path.slice(8)));

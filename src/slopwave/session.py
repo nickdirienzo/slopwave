@@ -110,8 +110,8 @@ def render_revision(root, score_path, *, parent=None, brief=None, plan=None,
     elif any((root / 'revisions').glob('r-*')):
         raise ValueError('Later revisions require an explicit parent')
     score = load(score_path)
-    if score.get('soundfonts') or score.get('sample_buffers'):
-        raise ValueError('Session rendering currently supports synth-only scores')
+    from .samples import snapshot_samples
+    score = snapshot_samples(score, Path(score_path).resolve().parent)
     if not note.strip():
         raise ValueError('Describe the revision')
     source = export(score)  # Also enforces the mixed stage.

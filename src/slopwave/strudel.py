@@ -5,6 +5,42 @@ from pathlib import Path
 ROOT = Path.cwd()  # Only legacy research helpers use this; public APIs take paths.
 
 
+# Explicit supported controls: unknown keys must never disappear from an export.
+# Values are literals, not JavaScript fragments or mini-notation expressions.
+VOICE_CONTROLS = (
+    'n', 'hpf', 'hpq', 'lpf', 'lpq', 'bpf', 'bpq',
+    'lpenv', 'lpattack', 'lpdecay', 'lpsustain', 'lprelease',
+    'hpenv', 'hpattack', 'hpdecay', 'hpsustain', 'hprelease',
+    'bpenv', 'bpattack', 'bpdecay', 'bpsustain', 'bprelease',
+    'freq', 'penv', 'pattack', 'pdecay', 'psustain', 'prelease',
+    'fm', 'fmh', 'fmattack', 'fmdecay', 'fmsustain', 'fmrelease',
+    'distort', 'distortvol', 'crush', 'coarse', 'shape',
+    'noise', 'vib', 'vibmod', 'attack', 'decay', 'sustain', 'release',
+    'pan', 'room', 'roomsize', 'roomfade', 'roomlp', 'roomdim',
+    'delay', 'delaytime', 'delayfeedback', 'phaser', 'phaserdepth',
+    'phasercenter', 'phasersweep', 'tremolo', 'tremolodepth',
+)
+SYNTH_SOUNDS = {'sine', 'triangle', 'sawtooth', 'square', 'white', 'pink', 'brown'}
+
+
+def validate_voices(data):
+    import math
+    sounds = SYNTH_SOUNDS | set(data.get('sample_buffers', {})) | set(data.get('soundfonts', {}))
+    for part, settings in data.get('voices', {}).items():
+        if part not in data['parts']:
+            raise ValueError(f'Unknown voice part: {part}')
+        if settings.get('sound') not in sounds:
+            raise ValueError(f'Unsupported sound for {part}: {settings.get("sound")}')
+        unknown = set(settings) - {'sound'} - set(VOICE_CONTROLS)
+        if unknown:
+            raise ValueError(f'Unsupported voice controls for {part}: {sorted(unknown)}')
+        for key, value in settings.items():
+            if key == 'sound':
+                continue
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                raise ValueError(f'{part}.{key} must be a finite number')
+
+
 def note_name(midi):
     return ['c','cs','d','ds','e','f','fs','g','gs','a','as','b'][midi % 12] + str(midi//12-1)
 
@@ -17,6 +53,7 @@ def format_events(events):
 
 
 def strudel_source(track, data):
+    validate_voices(data)
     text = f'''// {track['title']} — {track.get('collection', 'slopwave')}
 // Source: {track['youtube']}
 // Machine-transcribed synth draft; listening review is still needed.
@@ -103,13 +140,9 @@ const phrase = events => {{
             'hat': '.s("white").hpf(6500)\n    .decay(0.025).sustain(0)',
         }
         for part, settings in data['voices'].items():
-            if (settings['sound'] not in ('sine', 'triangle', 'sawtooth', 'gm_piano', 'gm_string_ensemble_1',
-                                         'gm_banjo', 'gm_acoustic_bass', 'gm_acoustic_guitar_steel', 'gm_woodblock')
-                    and settings['sound'] not in data.get('sample_buffers', {})):
-                raise ValueError('Unsupported synth')
-            chain = f'.s("{settings["sound"]}")'
-            chain += ''.join(f'.{key}({settings[key]})'
-                             for key in ('n', 'hpf', 'lpf', 'bpf', 'bpq', 'noise', 'vib', 'vibmod', 'attack', 'decay', 'sustain', 'release', 'pan', 'room') if key in settings)
+            chain = '.s(' + json.dumps(settings['sound']) + ')'
+            chain += ''.join(f'.{key}({json.dumps(settings[key])})'
+                             for key in VOICE_CONTROLS if key in settings)
             text = text.replace(f'phrase({part}){defaults[part]}', f'phrase({part}){chain}')
     if 'drum_mix' in data:
         text = text.replace('mix.drums * 0.45', f'mix.drums * {data["drum_mix"]["snare"]}')
@@ -164,7 +197,7 @@ const phrase = events => {{
     if 'sample_buffers' in data:
         # Decode before Play scheduling begins, rather than losing first hits to
         # lazy sample loading. Register short, unpitched one-shots explicitly.
-        preload = '''// Preload acoustic percussion (VCSL, CC0; internet required).
+        preload = '''// Preload acoustic percussion / custom one-shots before scheduling.
 // mini-off: sample names and URLs are literal JavaScript strings.
 const loadSampleBuffer = async uri => {
   const response = await fetch(uri);
@@ -178,6 +211,7 @@ const samplePreload = Object.entries(sampleDefinitions).map(async ([name, defini
     const ctx = getAudioContext();
     const source = ctx.createBufferSource();
     source.buffer = buffer;
+    source.__slopwaveSound = name;
     const envelope = ctx.createGain();
     const end = time + Math.min(buffer.duration, definition.seconds);
     envelope.gain.setValueAtTime(1, time);
@@ -185,7 +219,7 @@ const samplePreload = Object.entries(sampleDefinitions).map(async ([name, defini
     envelope.gain.linearRampToValueAtTime(0, end);
     source.connect(envelope);
     // Strudel owns the output envelope's downstream connections.
-    source.onended = () => { source.disconnect(); onended(); };
+    source.onended = () => { source.disconnect(); envelope.disconnect(); onended(); };
     source.start(time);
     source.stop(end);
     return { node: envelope, stop: () => {}, nodes: { source: [source] } };

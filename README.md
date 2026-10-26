@@ -81,3 +81,6 @@ still a pretty significant part of this for now.
 [AGPL-3.0-or-later](LICENSE) for the code. [CC0](examples/lantern/LICENSE) for
 Lantern. The original Ribbit King music isn't covered by either license.
 [Licensing notes](docs/licensing.md) have the dependency and instrument details.
+
+See [sound design](docs/sound-design.md) for synthesis controls, portable sample
+snapshots, module preloading and browser verification limits.

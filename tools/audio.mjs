@@ -6,34 +6,41 @@ import {chromium} from 'playwright';
 import {core} from './runtime.mjs';
 const {noteToMidi}=core;
 import {serve} from './server.mjs';
-const [mode,scorePath='build/mixed.json',sourcePath='build/lantern.strudel.js',output=mode==='render'?'build/lantern.wav':'build/playback.json']=process.argv.slice(2);
+import {renderSegments, canSegment} from './render-segments.mjs';
+import {watchBrowser, assertBrowser} from './browser-checks.mjs';
+const [mode,scorePath='build/mixed.json',sourcePath='build/lantern.strudel.js',output=mode==='render'?'build/lantern.wav':'build/playback.json',modulePath]=process.argv.slice(2);
 assert(['render','playback'].includes(mode),'Use render or playback');
 const score=JSON.parse(await readFile(scorePath,'utf8'));
 const source=await readFile(sourcePath);
-assert(!score.soundfonts&&!score.sample_buffers,'Local browser checks currently support synth-only scores');
-const {server,url}=await serve(scorePath,sourcePath);
+assert(!score.soundfonts,'Local browser checks require embedded sample_buffers instead of network soundfonts');
+const {server,url}=await serve(scorePath,sourcePath,modulePath);
 let browser;
 try {
  browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
  const page=await browser.newPage({acceptDownloads:true});
  const errors=[]; const external=[];
- page.on('pageerror',e=>errors.push(e.message));
- page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ watchBrowser(page,errors);
  await page.route('**/*',route=>{
   const request=route.request().url();
   if(!request.startsWith(url+'/')&&!request.startsWith('blob:')){external.push(request);return route.abort();}
   return route.continue();
  });
- await page.goto(url);
+ await page.goto(url+(modulePath?'/?module=1':''));
  await page.waitForFunction(()=>window.__ready||window.__failure,{},{timeout:30000});
  assert.equal(await page.evaluate(()=>window.__failure),undefined,'Player failed');
  const report={mode,source_sha256:createHash('sha256').update(source).digest('hex'),score_sha256:createHash('sha256').update(await readFile(scorePath)).digest('hex'),strudel_web:'1.3.0',seconds:score.loop_seconds,errors,external_requests:external,listening_comparison:false};
  await mkdir(dirname(resolve(output)),{recursive:true});
  if(mode==='render') {
-  const downloading=page.waitForEvent('download',{timeout:120000});
+  if(score.loop_seconds>60&&!modulePath&&canSegment(score)) {
+   await page.close();
+   report.segment_render=await renderSegments(browser,url,score,output);
+  } else {
+  const downloading=page.waitForEvent('download',{timeout:Math.max(120000,score.loop_seconds*4000)});
   await page.click('#render');
   const download=await downloading; await download.saveAs(output);
   assert.equal(await download.failure(),null);
+  }
+  if(!page.isClosed()) await assertBrowser(page,errors,external);
   const wav=await readFile(output);
   assert.equal(wav.toString('ascii',0,4),'RIFF');
   let pos=12,format,pcm;
@@ -42,24 +49,33 @@ try {
   for(let i=0;i<pcm.length;i+=bytes){const n=format.code===3?pcm.readFloatLE(i):pcm.readInt16LE(i)/32768;assert(Number.isFinite(n));peak=Math.max(peak,Math.abs(n));sum+=n*n;}
   const duration=pcm.length/bytes/format.channels/format.rate;
   assert(Math.abs(duration-score.loop_seconds)<2/format.rate,'Wrong render duration');
-  assert(peak>.001&&peak<.99,'Silent or clipped render');
+  assert(peak>.001,`Silent render: peak=${peak}`);
+  assert(peak<.99,`Clipped render: peak=${peak}`);
   Object.assign(report,{...format,peak,rms:Math.sqrt(sum/(pcm.length/bytes)),duration_seconds:duration,wav_sha256:createHash('sha256').update(wav).digest('hex')});
  } else {
-  assert(Object.values(score.voices??{}).every(v=>!v.noise),'Playback check cannot distinguish added synth noise from percussion');
-  report.noise_scope='Combined default white-noise snare/hat starts; instrument identity remains covered by the structural check';
+  report.noise_scope='Noise buffer starts are checked as a combined class; noise color/part identity is structural evidence only';
+  report.sample_scope='Named custom sample buffer starts, including their audio-clock scheduling times';
   await page.click('#play');
   // Follow the audio clock: browser startup and suspended contexts consume wall
   // time without advancing the performance.
-  await page.waitForFunction(()=>window.__playing&&window.__starts.length>0);
+  await page.waitForFunction(()=>window.__failure||(window.__playing&&window.__starts.length>0));
+  assert.equal(await page.evaluate(()=>window.__failure),undefined,'Playback failed');
   await page.waitForFunction(seconds=>window.__context.currentTime>=window.__starts[0].when+seconds+.1,score.loop_seconds,{timeout:Math.max(30000,score.loop_seconds*2000)});
   const starts=await page.evaluate(()=>{window.__stop();return window.__starts;});
-  const expected=Object.entries(score.parts).flatMap(([part,rows])=>rows.map(([at,,pitch])=>({at:at*60/score.bpm,frequency:['snare','hat'].includes(part)?0:part==='kick'?65:440*2**(((typeof pitch==='number'?pitch:noteToMidi(pitch))-69)/12),type:score.voices?.[part]?.sound??(['snare','hat'].includes(part)?'white':part==='kick'?'sine':'triangle')}))).sort((a,b)=>a.at-b.at);
+  const expected=Object.entries(score.parts).flatMap(([part,rows])=>rows.map(([at,,pitch])=>{
+   const voice=score.voices?.[part]??{};
+   let type=voice.sound??(['snare','hat'].includes(part)?'white':part==='kick'?'sine':'triangle');
+   if(['pink','brown'].includes(type)) type='white';
+   const frequency=(type==='white'||score.sample_buffers?.[type])?0:voice.freq??(part==='kick'&&!voice.sound?65:440*2**(((typeof pitch==='number'?pitch:noteToMidi(pitch))-69)/12));
+   return {at:at*60/score.bpm,frequency,type};
+  })).sort((a,b)=>a.at-b.at);
   assert(expected.length,'No events to check');
   const first=starts.find(s=>s.type===expected[0].type&&Math.abs(s.frequency-expected[0].frequency)<.2);
   assert(first,'First attack missing'); const origin=first.when-expected[0].at;
   const available=starts.map(s=>({...s,at:s.when-origin}));let missed=[],late=[];
   for(const e of expected){const i=available.findIndex(s=>s.type===e.type&&Math.abs(s.frequency-e.frequency)<.2&&Math.abs(s.at-e.at)<.025);if(i<0){missed.push(e);continue;}const [s]=available.splice(i,1);if(s.calledAt>s.when+.01)late.push({...e,lateness:s.calledAt-s.when});}
   Object.assign(report,{expected_attacks:expected.length,missing:missed,late,observed_starts:starts.length});
+  await assertBrowser(page,errors,external);
   await writeFile(output,JSON.stringify(report,null,2)+'\n');
   assert.equal(missed.length,0,'Dropped attacks');assert.equal(late.length,0,'Late scheduling');
  }

@@ -9,6 +9,11 @@ The tools do not make semantic musical decisions automatically. There is no agen
 service to deploy and no dependency on one vendor's agent API. `AGENTS.md` provides
 the local context; the optional song-review skill supplies a focused review method.
 
+The installable [slopwave skill](../.agents/skills/slopwave/SKILL.md) carries the
+workflow into a consumer repository, including description-led composition and
+setup. Read [consumer sessions](consumer-sessions.md) for revision capture and
+feedback. Those artifacts stay in the consumer, not in the engine checkout.
+
 ## Example requests
 
 - “Render the original Lantern example and give me a WAV and the Strudel source.”

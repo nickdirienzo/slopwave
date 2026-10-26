@@ -24,6 +24,15 @@ It retains tests for supported register crossings, octave candidates, holds vers
 reattacks, stale corrections, mixing once, and arrangement-specific edits.
 No commercial recordings are needed. CI runs the suite and the original example.
 
+Consumer-session regressions cover immutable snapshots, stale artifact detection,
+failed-render cleanup, explicit parent revisions, context inheritance, and
+conservative preference export. `python tests/consumer_smoke.py` copies the skill
+into a temporary consumer, configures an existing runtime, renders two original
+synth revisions, and exports one synthetic preference pair. It checks actual
+playback and equivalence between the REPL source and game pattern factory. CI
+runs this after installing Node dependencies and Chromium. It does not test
+musical taste or pretend its synthetic feedback came from a listening user.
+
 Browser tooling serves only the preview, selected score/source, and the pinned
 Strudel bundle on localhost. Tests reject external requests. `CHROMIUM_PATH` is
 an optional override; normal installations use Playwright's managed Chromium.

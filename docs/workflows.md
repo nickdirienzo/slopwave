@@ -4,6 +4,12 @@ Use explicit file paths. The public commands do not consult a private track
 catalog, fetch YouTube recordings, or run a hosted LLM. Work in an ignored directory
 such as `build/`; keep raw inputs and every derived stage separately.
 
+For another project, use the [installable skill](../.agents/skills/slopwave/SKILL.md)
+and [consumer sessions](consumer-sessions.md). `session render` combines synth
+export, rendering, validation, and revision capture in the consumer directory.
+`slopwave export … --format module` exports a synth-only `createPattern(S)` factory
+and tempo metadata without changing playback or global tempo.
+
 ## Setup and original example
 
 Python 3.10–3.12 and Node.js 22.15+ are required. From the repository root:

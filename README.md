@@ -10,6 +10,11 @@ transcriptions with piano and strings, banjo, and a kazoo.
 `slopwave` is the code that came out of that. It's a research prototype meant to be
 driven by a coding agent. Still figuring out how far this can go.
 
+There's an installable [slopwave skill](.agents/skills/slopwave/SKILL.md) now.
+It gives an agent the workflow and setup instructions; the Python/Node tools do
+the rendering and checks. Music, revisions, and listening feedback live in the
+project using it.
+
 ## Try the Ribbit King example
 
 [Title Screen: Strudel source](examples/ribbit-king/title-screen.strudel.js) ·
@@ -21,7 +26,17 @@ includes the timing, phrasing, and octave fixes from those listening sessions.
 
 ## Work with an agent
 
-Open the repo in your coding agent, give it a recording, and ask it to make a
+In another project, ask your agent:
+
+> Install the slopwave skill from nickdirienzo/slopwave at
+> `.agents/skills/slopwave` and set it up here. Keep music experiments and
+> preferences in this project.
+
+Then ask it to compose a loop from a description, or work from a recording.
+The agent authors the music; there's no built-in text-to-music model or automatic
+good-taste detector. The new session workflow renders synth voices for now.
+
+You can also open this repo in your coding agent, give it a recording, and ask for a
 Strudel arrangement. Listen to what comes back. Tell it where the notes are
 wrong, where something should be held, or where the mix is fighting itself.
 
@@ -30,10 +45,15 @@ wrong, where something should be held, or where the mix is fighting itself.
 it uses. The [Lantern example](examples/lantern/lantern.strudel.js) is a small
 original tune for checking setup and rendering.
 
+[Consumer sessions](docs/consumer-sessions.md) explains how revisions and your
+feedback stay connected. “Much better” can become a preference pair; an edit or
+a passing test by itself can't.
+
 ## What's happening
 
 ```text
 audio → detections → reviewed score → arrangement → mix → Strudel/audio
+brief → agent-authored plan + score ──────┘
 ```
 
 Models separate stems and suggest notes. Algorithms help reconstruct phrases,

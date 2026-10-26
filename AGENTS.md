@@ -13,6 +13,13 @@ arrangement task. For a whole-song or passage anomaly review, use the optional
 [song-review skill](.agents/skills/song-review/SKILL.md). Detailed executable
 operations live in [workflows](docs/workflows.md), not in this entrypoint.
 
+For use from another project, start with the portable
+[slopwave skill](.agents/skills/slopwave/SKILL.md). Consumer briefs, scores,
+revisions, renders, and preferences belong in the consumer's workspace. Its
+`.slopwave/config.json` selects the toolchain and storage. Use `session render`
+to preserve listening candidates and `session record` for attributed feedback;
+agent judgments and execution checks are never human preference labels.
+
 ## Preserve the research
 
 - Keep source audio, raw detections, evidence, reviewed scores, arrangements, and

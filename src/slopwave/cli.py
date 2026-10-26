@@ -74,15 +74,33 @@ def export(source):
     return header+pre[barrier:]+text[at:]
 
 
+def export_module(source):
+    """A synth-only factory: the consumer owns resources, tempo and playback."""
+    if source.get('soundfonts') or source.get('sample_buffers'):
+        raise ValueError('Module export currently supports synth-only scores')
+    text = export(source)
+    body = text[text.index('const BPM = '):].replace('setcpm(BPM / 4);\n', '', 1)
+    body = body.replace('\nstack(\n', '\nreturn stack(\n', 1)
+    return (f'// slopwave score SHA-256: {digest(source)}\n'
+            f'export const bpm = {source["bpm"]!r};\n'
+            f'export const beats = {source["beats"]!r};\n'
+            'export const cps = bpm / 240;\n'
+            'export function createPattern(S) {\n'
+            'const {stack, cat, timecat, silence, note, gain} = S;\n' + body + ';\n}\n')
+
+
 def main():
     parser = argparse.ArgumentParser(prog='slopwave', description='Research workbench for editable Strudel arrangements')
     subs = parser.add_subparsers(dest='command', required=True)
+    from .session import add_parser, dispatch
+    add_parser(subs)
     for name in ('validate','review','correct','arrange','mix','export'):
         sub = subs.add_parser(name); sub.add_argument('input', type=Path)
         if name != 'validate': sub.add_argument('-o','--output',type=Path,required=True)
         if name == 'correct': sub.add_argument('--patch',type=Path,required=True)
         if name == 'arrange': sub.add_argument('--profile',choices=['synth','piano-strings','bluegrass','kazoo'],default='synth')
         if name == 'mix': sub.add_argument('--profile',choices=['stem-rock-v1','preserve'],default='stem-rock-v1')
+        if name == 'export': sub.add_argument('--format', choices=['repl','module'], default='repl')
         if name == 'review':
             sub.add_argument('--start',type=float,default=0); sub.add_argument('--end',type=float)
             sub.add_argument('--features',type=Path,help='Hash-bound evidence manifest for a whole-score acoustic audit')
@@ -95,6 +113,8 @@ def main():
     sub = subs.add_parser('decode'); sub.add_argument('input',type=Path); sub.add_argument('--stems',type=Path,required=True); sub.add_argument('-o','--output',type=Path,required=True)
     args = parser.parse_args()
     try:
+        if args.command == 'session':
+            print(json.dumps(dispatch(args), indent=2)); return
         if getattr(args, 'output', None) and args.output.resolve()==args.input.resolve():
             raise ValueError('Keep each pipeline stage in a separate file')
         if args.command in ('transcribe','separate','evidence','transcribe-stems','decode'):
@@ -129,7 +149,8 @@ def main():
         elif args.command=='arrange': result=arrange(data,args.profile)
         elif args.command=='mix': result=mix(data,args.profile)
         else:
-            args.output.parent.mkdir(parents=True,exist_ok=True); args.output.write_text(export(data)); return
+            args.output.parent.mkdir(parents=True,exist_ok=True)
+            args.output.write_text(export_module(data) if args.format == 'module' else export(data)); return
         save(args.output,result)
     except (ValueError, KeyError, OSError) as error:
         parser.error(str(error))

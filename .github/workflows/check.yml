@@ -33,3 +33,5 @@ jobs:
           python tests/write_playback_fixture.py
           npm run check -- build/playback-fixture/score.json build/playback-fixture/score.strudel.js
           npm run playback -- build/playback-fixture/score.json build/playback-fixture/score.strudel.js build/playback-fixture/playback.json
+      - name: Consumer skill and session
+        run: python tests/consumer_smoke.py

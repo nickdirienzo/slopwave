@@ -53,11 +53,11 @@ def audit(data, features, decoder_notes=(), f0=None):
                         and (following[0]-at-duration)*period < .4):
                     categories.append('isolated_downward_register_outlier')
             if part == 'high' and pitch >= 75:
-                categories.append('upper_vocal_register_review')
+                categories.append('upper_lead_register_review')
             if part == 'middle' and pitch >= 83:
                 categories.append('high_backing_pitch_review')
             if part == 'high' and duration*period >= 1.5:
-                categories.append('long_vocal_hold_review')
+                categories.append('long_lead_hold_review')
             if not categories:
                 continue
             evidence = dict(harmonic_support=score.get(pitch), lower_octaves=candidates,

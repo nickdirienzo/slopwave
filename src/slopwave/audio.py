@@ -29,7 +29,13 @@ def transcribe(path, output, bpm, role='melody'):
     # No temporary WAV timestamps enter the model-input identity.
     settings = dict(onset_threshold=.4,frame_threshold=.25,minimum_note_length=60,
                     minimum_frequency=35,maximum_frequency=2100)
-    _, _, raw = predict(mono,model,**settings)
+    # Basic Pitch 0.4 accepts a path, not a NumPy waveform. Use float PCM so
+    # the model sees the same mono samples recorded in our provenance and RMS.
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix='slopwave-pitch-') as work:
+        model_input=Path(work)/'input.wav'
+        sf.write(model_input,mono,22050,subtype='FLOAT')
+        _, _, raw = predict(model_input,model,**settings)
     seconds = len(mono)/22050
     if not seconds: raise ValueError('Empty audio')
     part = {'bass':'low','accompaniment':'middle','melody':'high'}[role]
@@ -95,6 +101,8 @@ def evidence(score, stems, output):
     manifest=dict(source_audio_sha256=score['source_audio_sha256'],input_sha256=digest(score),
                   sample_rate=22050,hop=256,fft=4096,parts={})
     for part,name in (('low','bass'),('middle','other'),('high','vocals')):
+        name=score.get('stem_roles',{}).get(part,name)
+        if name not in separation['stems']: raise ValueError(f'Unknown evidence stem for {part}: {name}')
         stem=stems/separation['stems'][name]['path']
         if file_hash(stem)!=separation['stems'][name]['sha256']: raise ValueError('Stem contents changed')
         y,sr=sf.read(stem,always_2d=True,dtype='float32')
@@ -102,7 +110,7 @@ def evidence(score, stems, output):
         y=librosa.resample(y.mean(axis=1),orig_sr=sr,target_sr=22050)
         q=harmonic_features(y,22050,pitches=np.arange(24,97))
         target=output/(part+'.npz'); np.savez_compressed(target,**q)
-        manifest['parts'][part]=dict(path=target.name,sha256=file_hash(target),stem_sha256=file_hash(stem),
+        manifest['parts'][part]=dict(path=target.name,sha256=file_hash(target),stem=name,stem_sha256=file_hash(stem),
            pcm_sha256=hashlib.sha256(y.astype('<f4').tobytes()).hexdigest())
     (output/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 

@@ -1,6 +1,6 @@
 # Licensing inventory
 
-The candidate proposes **AGPL-3.0-or-later** for the workbench code, documentation,
+The workbench uses **AGPL-3.0-or-later** for its code, documentation,
 and optional review skill. The exact license is included at the repository root.
 Strudel's integrated runtime uses that license; its maintainers document source
 availability and compatible licensing requirements for integrations:
@@ -24,6 +24,7 @@ Installing dependencies does not put their source or model files into this Git r
 | PyTorch / torchaudio | BSD-style project licenses plus third-party notices | Optional separation dependencies |
 | VCSL percussion | CC0-1.0 | URLs in optional kazoo profile; no audio committed |
 | FluidR3-named soundfont presets | Exact loaded sample distribution requires attribution/license verification before bundling or shipping sampled examples | Identifiers in research profiles only; no soundfont files committed |
+| Ribbit King Title Screen | Underlying music is outside the repository code license | Strudel cover source; no recording or render |
 | Lantern score and composition | CC0-1.0 dedication, to extent rights exist; newly authored with agent assistance | Explicit notes and generated synth-only example |
 
 Primary sources:
@@ -53,6 +54,7 @@ MIDI, correction files containing protected music, or cover renders. Composition
 and recording are separate works:
 https://www.copyright.gov/circs/circ56a.pdf
 Linking to an original recording does not itself grant redistribution rights.
-The release candidate therefore contains no commercial-song scores or private
-experiment history. Inspect every new example's composition, performance and
-instrument provenance before adding it to the public collection.
+The Ribbit King Title Screen example is an unofficial synth cover, included as
+Strudel source. Its underlying music is not licensed under the workbench's AGPL
+or Lantern's CC0 dedication. The example links to the original track; the repo
+does not include its source recording, stems, or rendered audio.

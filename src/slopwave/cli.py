@@ -39,9 +39,17 @@ def arrange(source, profile):
     return step(source, result, 'arranged', 'arrange', {'profile':profile})
 
 
-def mix(source):
+def mix(source, profile='stem-rock-v1'):
     if source['stage'] != 'arranged':
         raise ValueError('Mix exactly once, after arrangement')
+    if profile == 'preserve':
+        if not all(key in source.get('mix', {}) for key in ('low','middle','high','drums')):
+            raise ValueError('Preserving a mix requires explicit arrangement bus levels')
+        result=deepcopy(source)
+        result['mix_review']=dict(profile='preserve',notes_and_timing_preserved=True,
+            policy='Retain explicit reviewed note gains and bus levels without additional compression.')
+        return step(source,result,'mixed','mix',{'profile':profile})
+    if profile != 'stem-rock-v1': raise ValueError('Unknown mix profile')
     from .mixing import refine_mix
     result = refine_mix(source, 'stem-rock-v1')
     # Preserve the arrangement's timbre and intended part balance while applying
@@ -74,6 +82,7 @@ def main():
         if name != 'validate': sub.add_argument('-o','--output',type=Path,required=True)
         if name == 'correct': sub.add_argument('--patch',type=Path,required=True)
         if name == 'arrange': sub.add_argument('--profile',choices=['synth','piano-strings','bluegrass','kazoo'],default='synth')
+        if name == 'mix': sub.add_argument('--profile',choices=['stem-rock-v1','preserve'],default='stem-rock-v1')
         if name == 'review':
             sub.add_argument('--start',type=float,default=0); sub.add_argument('--end',type=float)
             sub.add_argument('--features',type=Path,help='Hash-bound evidence manifest for a whole-score acoustic audit')
@@ -118,7 +127,7 @@ def main():
             write_json(args.output,report); return
         if args.command=='correct': result = apply_corrections(data,json.loads(args.patch.read_text()))
         elif args.command=='arrange': result=arrange(data,args.profile)
-        elif args.command=='mix': result=mix(data)
+        elif args.command=='mix': result=mix(data,args.profile)
         else:
             args.output.parent.mkdir(parents=True,exist_ok=True); args.output.write_text(export(data)); return
         save(args.output,result)

@@ -76,6 +76,12 @@ slopwave transcribe melody.wav --bpm 112 --role melody -o build/detections.json
 The decoder requires a separated-stem transcription and matching stems. It keeps
 its result at `detections` because a sequence inference is not a review decision.
 Raw model confidence remains evidence; event gain follows measured amplitude.
+For instrumental leads, set the score's explicit `stem_roles` mapping before
+generating evidence, for example `high: other` alongside `low: bass` and
+`middle: other`. This selects evidence sources; it does not discover which notes
+form the melody. Review those assignments separately. The vocal decoder remains
+specific to the vocal stem.
+
 Evidence archives are generated explicitly and hash-bound to the score; changing
 the score requires generating a matching manifest. The current evidence commands
 require uncropped stems aligned to source time zero. Acoustic review covers pitched
@@ -84,6 +90,10 @@ voices; it does not establish every missing note or correct drum hit.
 Inspect evidence, save a patch, apply it to the decoded score, then arrange/mix/export.
 Empty `edits` may record a review with no supported corrections; include the review
 reference and unresolved findings. Do not use an empty patch as a claim of accuracy.
+
+To retain an already reviewed balance, supply explicit `mix` bus levels in the
+arranged score and use `slopwave mix … --profile preserve`. This keeps note gains
+and bus levels unchanged; the default profile applies its compression and ducking.
 
 ## Arrangement research
 

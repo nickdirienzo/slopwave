@@ -51,7 +51,7 @@ verification that a note is correct.
 
 ## Bootstrapping
 
-Use the setup in the README to install lightweight tools. Add `analysis`,
+Use the setup in [workflows](workflows.md#setup-and-original-example) to install lightweight tools. Add `analysis`,
 `transcription`, or `stems` extras only when required. On a tool-restricted host,
 explain the specific blocked operation; keep doing independent local work.
 Do not depend on developer-machine paths, cached recordings, or a live public REPL

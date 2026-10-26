@@ -28,3 +28,8 @@ jobs:
           npm run check -- build/mixed.json build/lantern.strudel.js
           npm run render -- build/mixed.json build/lantern.strudel.js build/lantern.wav
           npm run playback -- build/mixed.json build/lantern.strudel.js build/playback.json
+      - name: Synth percussion playback
+        run: |
+          python tests/write_playback_fixture.py
+          npm run check -- build/playback-fixture/score.json build/playback-fixture/score.strudel.js
+          npm run playback -- build/playback-fixture/score.json build/playback-fixture/score.strudel.js build/playback-fixture/playback.json

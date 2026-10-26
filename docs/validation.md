@@ -27,7 +27,9 @@ No commercial recordings are needed. CI runs the suite and the original example.
 Browser tooling serves only the preview, selected score/source, and the pinned
 Strudel bundle on localhost. Tests reject external requests. `CHROMIUM_PATH` is
 an optional override; normal installations use Playwright's managed Chromium.
-Playback currently checks synthesized oscillators. Sampled profiles must be
+Playback checks synthesized oscillators and combined white-noise percussion
+starts. Added synth-noise layers are rejected because they cannot be distinguished
+from percussion by this check. Sampled profiles must be
 checked in a runtime with their instrument resources; the local runner rejects
 them rather than claiming to validate unobserved sample playback.
 

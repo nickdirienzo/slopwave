@@ -13,6 +13,13 @@ OscillatorNode.prototype.start=function(when=0,...args){
  window.__starts.push({when,calledAt:this.context.currentTime,frequency:this.frequency.value,type:this.type});
  return start.call(this,when,...args);
 };
+const bufferStart=AudioBufferSourceNode.prototype.start;
+AudioBufferSourceNode.prototype.start=function(when=0,...args){
+ // Synth-only runner: white percussion uses a looping, two-second mono buffer.
+ if(this.loop&&this.buffer?.numberOfChannels===1&&Math.abs(this.buffer.duration-2)<.001)
+  window.__starts.push({when,calledAt:this.context.currentTime,frequency:0,type:'white'});
+ return bufferStart.call(this,when,...args);
+};
 try {
  const [score,source]=await Promise.all([fetch('/score.json').then(r=>r.json()),fetch('/score.js').then(r=>r.text())]);
  if(score.soundfonts||score.sample_buffers) throw new Error('Local preview currently supports synthesized arrangements. Use Strudel with the documented sample resources for sampled profiles.');

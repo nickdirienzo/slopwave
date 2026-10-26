@@ -1,7 +1,7 @@
 # slopwave review operations
 
-Use explicit files from the requested experiment. No private track catalog or
-commercial examples are bundled. Read [workflows](../../../../docs/workflows.md)
+Use explicit files from the requested experiment. The included cover example is
+Strudel source; no private track catalog is bundled. Read [workflows](../../../../docs/workflows.md)
 for executable commands and [score format](../../../../docs/score-format.md) for
 units, stages, source identity and correction contracts.
 

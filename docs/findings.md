@@ -2,7 +2,8 @@
 
 The private experiments began with a game soundtrack and expanded into vocal
 melodies and several instrumental arrangements. The public repository carries
-algorithms and synthetic regressions, not the recordings or recovered scores.
+algorithms, synthetic regressions, and the Title Screen Strudel example.
+Source recordings and stems stay in the local experiments.
 
 - **Execution can masquerade as rhythm failure.** Whole-song parallel scheduling
   dropped valid attacks. Schedule the current bar, retain gates across boundaries,

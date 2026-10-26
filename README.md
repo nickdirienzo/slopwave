@@ -1,52 +1,53 @@
 # slopwave
 
-A research workbench exploring how audio models, musical heuristics, and agent-assisted review can produce editable Strudel arrangements.
+I asked Codex if it could turn the Ribbit King soundtrack into
+[Strudel](https://strudel.cc/). It got surprisingly close.
 
-Built to be used by a coding agent, with a human listening and steering the
-experiments. So far that means transcribing audio, fixing strange notes and
-phrasing, trying different instruments, and checking whether the result plays
-correctly. It's a research project / proof of concept.
+After a few hours of listening, we fixed timing, octave errors, and held notes
+that had become a bunch of beeps. Eventually we tried restyling those
+transcriptions with piano and strings, banjo, and a kazoo.
 
-## Try it
+`slopwave` is the code that came out of that. It's a research prototype meant to be
+driven by a coding agent. Still figuring out how far this can go.
 
-Open this repository in your coding agent and ask:
+## Try the Ribbit King example
 
-> Render the Lantern example and give me a WAV and the Strudel source.
+[Title Screen: Strudel source](examples/ribbit-king/title-screen.strudel.js) ·
+[Original track](https://www.youtube.com/watch?v=oRnpBqkoI6U&t=215s)
 
-Or, with your own local audio and arrangement:
+Copy the whole source file into [strudel.cc](https://strudel.cc/) and press Play.
+It loops about 100 seconds of the title music using synth voices. This version
+includes the timing, phrasing, and octave fixes from those listening sessions.
 
-> Review this arrangement for octave errors and fragmented held notes.
-> Investigate the source, preserve the current version, and save supported fixes.
+## Work with an agent
 
-[AGENTS.md](AGENTS.md) gives the agent its working instructions.
+Open the repo in your coding agent, give it a recording, and ask it to make a
+Strudel arrangement. Listen to what comes back. Tell it where the notes are
+wrong, where something should be held, or where the mix is fighting itself.
+
+[AGENTS.md](AGENTS.md) gives the agent context.
 [Setup and commands](docs/workflows.md#setup-and-original-example) cover the tools
-it uses, including optional transcription dependencies.
+it uses. The [Lantern example](examples/lantern/lantern.strudel.js) is a small
+original tune for checking setup and rendering.
 
-To hear an example immediately, paste the entire
-[Lantern arrangement](examples/lantern/lantern.strudel.js) into
-[strudel.cc](https://strudel.cc/) and press Play. It's an original eight-bar study
-using synth voices; no model or instrument downloads are needed.
-
-## How it works
+## What's happening
 
 ```text
 audio → detections → reviewed score → arrangement → mix → Strudel/audio
 ```
 
-Models separate stems and suggest notes. Algorithms reconstruct phrases, arrange
-parts, mix levels, and schedule playback. The agent investigates questionable
-results and saves corrections against the input score. You listen and decide
-whether it sounds any good. An authored score can enter the pipeline directly.
+Models separate stems and suggest notes. Algorithms help reconstruct phrases,
+arrange parts, and mix levels. The coding agent looks at the evidence and makes
+edits. Those decisions get saved so the next rebuild keeps the fixes.
 
-Notes and decisions live in an editable [score format](docs/score-format.md).
-The [agent workflow](docs/agent-workflow.md) and optional
-[song-review skill](.agents/skills/song-review/SKILL.md) describe the review process.
-[Research notes](docs/findings.md) capture what the experiments taught us.
+There's a [musical IR](docs/score-format.md) in here now. We also ended up with a
+[song-review skill](.agents/skills/song-review/SKILL.md), because reviewing a whole
+song for weird notes turned out to be useful. More detail in the
+[agent workflow](docs/agent-workflow.md) and [research notes](docs/findings.md).
 
-Transcription and genre profiles are still rough. Models miss notes and mistake
-harmonics for melody; an instrument swap can make a recognizable part sound awful.
-[Validation](docs/validation.md) checks structure and playback. Musical quality
-still needs listening.
+The [checks](docs/validation.md) can tell us whether notes actually played.
+They can't tell us whether the banjo arrangement sounds terrible. Listening is
+still a pretty significant part of this for now.
 
 ## Related work
 
@@ -57,6 +58,6 @@ still needs listening.
 
 ## License
 
-[AGPL-3.0-or-later](LICENSE) is the proposed code license; the original Lantern
-example is [CC0](examples/lantern/LICENSE). See [licensing notes](docs/licensing.md)
-for models, instrument samples, and music rights.
+[AGPL-3.0-or-later](LICENSE) for the code. [CC0](examples/lantern/LICENSE) for
+Lantern. The original Ribbit King music isn't covered by either license.
+[Licensing notes](docs/licensing.md) have the dependency and instrument details.

@@ -20,7 +20,7 @@ for(let repeat=0;repeat<2;repeat++) {
  const remaining=haps.map(h=>({at:Number(h.whole.begin)*4-repeat*score.beats,len:Number(h.whole.end.sub(h.whole.begin))*4*(h.value.clip??1),value:h.value}));
  for(const e of wanted) {
   const sound=score.voices?.[e.part]?.sound??(['kick','snare','hat'].includes(e.part)?(e.part==='kick'?'sine':'white'):'triangle');
-  const index=remaining.findIndex(h=>Math.abs(h.at-e.at)<2e-5 && Math.abs(h.len-e.len)<2e-5 && h.value.s===sound && core.noteToMidi(h.value.note)===e.pitch);
+  const index=remaining.findIndex(h=>Math.abs(h.at-e.at)<2e-5 && Math.abs(h.len-e.len)<2e-5 && h.value.s===sound && (typeof h.value.note==='number'?h.value.note:core.noteToMidi(h.value.note))===e.pitch);
   assert(index>=0,`Missing/mutated ${e.part} ${e.pitch} at ${e.at}`);
   const [h]=remaining.splice(index,1);
   const bus=['kick','snare','hat'].includes(e.part)?'drums':e.part;

@@ -45,14 +45,15 @@ try {
   assert(peak>.001&&peak<.99,'Silent or clipped render');
   Object.assign(report,{...format,peak,rms:Math.sqrt(sum/(pcm.length/bytes)),duration_seconds:duration,wav_sha256:createHash('sha256').update(wav).digest('hex')});
  } else {
-  assert(!score.parts.snare.length&&!score.parts.hat.length,'Oscillator playback check does not cover noise percussion');
+  assert(Object.values(score.voices??{}).every(v=>!v.noise),'Playback check cannot distinguish added synth noise from percussion');
+  report.noise_scope='Combined default white-noise snare/hat starts; instrument identity remains covered by the structural check';
   await page.click('#play');
   // Follow the audio clock: browser startup and suspended contexts consume wall
   // time without advancing the performance.
   await page.waitForFunction(()=>window.__playing&&window.__starts.length>0);
   await page.waitForFunction(seconds=>window.__context.currentTime>=window.__starts[0].when+seconds+.1,score.loop_seconds,{timeout:Math.max(30000,score.loop_seconds*2000)});
   const starts=await page.evaluate(()=>{window.__stop();return window.__starts;});
-  const expected=Object.entries(score.parts).flatMap(([part,rows])=>rows.map(([at,,pitch])=>({at:at*60/score.bpm,frequency:part==='kick'?65:440*2**((noteToMidi(pitch)-69)/12),type:score.voices?.[part]?.sound??(part==='kick'?'sine':'triangle')}))).sort((a,b)=>a.at-b.at);
+  const expected=Object.entries(score.parts).flatMap(([part,rows])=>rows.map(([at,,pitch])=>({at:at*60/score.bpm,frequency:['snare','hat'].includes(part)?0:part==='kick'?65:440*2**(((typeof pitch==='number'?pitch:noteToMidi(pitch))-69)/12),type:score.voices?.[part]?.sound??(['snare','hat'].includes(part)?'white':part==='kick'?'sine':'triangle')}))).sort((a,b)=>a.at-b.at);
   assert(expected.length,'No events to check');
   const first=starts.find(s=>s.type===expected[0].type&&Math.abs(s.frequency-expected[0].frequency)<.2);
   assert(first,'First attack missing'); const origin=first.when-expected[0].at;

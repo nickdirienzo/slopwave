@@ -42,10 +42,12 @@ operations live in [workflows](docs/workflows.md), not in this entrypoint.
 
 Keep experiments under ignored `build/` or `.cache/`. Use explicit paths and read
 existing manifests before invoking tools. No private track catalog is bundled.
-The only public musical fixture is the original Lantern study. Do not add source
-recordings, recovered commercial scores/MIDI, or cover audio to the public example
-collection without established redistribution rights. A source URL is provenance,
-not permission. This does not prevent authorized local research.
+The examples include the original Lantern study and, at the user's explicit
+request, the Ribbit King Title Screen Strudel cover source. Keep its reference
+link and distinguish the underlying music from the code license. The user chose
+source only for that example; its recordings, stems, and audio renders stay local.
+Follow the user's choices about further examples rather than expanding the
+collection automatically.
 
 Follow the user's requested scope. A local correction does not automatically mean
 retranscribe the full song. When fixes are authorized, finish the evidence-based

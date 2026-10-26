@@ -36,9 +36,11 @@ Those files belong to the toolchain, not this installed skill's parent folders.
 
 Use `session render` for each listening candidate. It preserves a mixed score,
 plan/brief, generated source, game module, WAV, runtime hashes, and checks as one
-revision. This first consumer workflow supports synth voices. Sampled profiles
-need a suitable renderer and sample-start checks; never claim synth-only tests
-verified them. WAV previews are finite passes, not verified seamless audio assets.
+revision. Synth voices and declared custom one-shot sample_buffers are supported, with
+embedded resource snapshots and actual sample-start checks. Read the toolchain
+`docs/sound-design.md` for controls, resources and module preloading. Network GM
+soundfont profiles still require their external runtime; do not claim local
+checks verified them. WAV previews are finite passes, not verified seamless audio assets.
 
 ## Learn from the session
 

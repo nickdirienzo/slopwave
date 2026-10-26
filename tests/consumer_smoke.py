@@ -51,5 +51,20 @@ with tempfile.TemporaryDirectory(prefix='slopwave-consumer-') as work:
     export = cli('session','export',session,'-o',home/'preferences/test.json')
     assert export['pairs'] == 1
     assert len(cli('session','inspect',session)['revisions']) == 2
-    print(json.dumps({'consumer_smoke':True,'events_per_revision':6,'revisions':2,
+    # A local sample must survive removal of its input asset after publication.
+    import wave, struct, math
+    sample = home / 'hit.wav'
+    with wave.open(str(sample), 'wb') as wav:
+        wav.setparams((1,2,44100,0,'NONE','not compressed'))
+        wav.writeframes(b''.join(struct.pack('<h',int(5000*math.sin(i*2*math.pi*180/44100)*(1-i/4410))) for i in range(4410)))
+    candidate['sample_buffers'] = {'hit':{'url':'hit.wav','seconds':.1}}
+    candidate['voices']['kick'] = {'sound':'hit'}
+    save(home/'mixed.json',candidate)
+    third = cli('session','render',session,'--score',home/'mixed.json','--parent',second['id'],
+                '--note','Sample snapshot','--toolchain',engine,'--node',node)
+    sample.unlink()
+    assert len(cli('session','inspect',session)['revisions']) == 3
+    stored = json.loads((session/'revisions'/third['id']/'score.json').read_text())
+    assert stored['sample_buffers']['hit']['url'].startswith('data:audio/wav;base64,')
+    print(json.dumps({'consumer_smoke':True,'events_per_revision':6,'revisions':3,
                       'preference_pairs':1,'module_equivalent':True,'external_requests':report['external_requests']}))

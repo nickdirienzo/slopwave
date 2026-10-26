@@ -104,15 +104,16 @@ class SessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'explicit parent'):
             self.revision()
 
-    def test_context_is_inherited_and_sampled_export_is_explicitly_unsupported(self):
+    def test_context_is_inherited_and_soundfont_module_has_explicit_preload(self):
         session.write_json(self.work / 'plan.json', {'motif':['d4','a4','g4']})
         a = self.revision(plan=self.work / 'plan.json')
         b = self.revision(a)
         self.assertEqual(session.read_json(self.root / 'revisions' / b / 'plan.json'),
                          session.read_json(self.work / 'plan.json'))
-        sampled = deepcopy(self.score); sampled['soundfonts'] = {'piano':{}}
-        with self.assertRaisesRegex(ValueError, 'synth-only'):
-            export_module(sampled)
+        sampled = mix(arrange(load(ROOT / 'examples/lantern/score.json'), 'piano-strings'))
+        module = export_module(sampled)
+        self.assertIn('export async function preload(S)', module)
+        self.assertIn('await Promise.all(preload)', module)
 
     def test_setup_preserves_existing_consumer_configuration(self):
         script = ROOT / '.agents/skills/slopwave/scripts/setup.py'

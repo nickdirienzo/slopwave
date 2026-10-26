@@ -75,14 +75,16 @@ def export(source):
 
 
 def export_module(source):
-    """A synth-only factory: the consumer owns resources, tempo and playback."""
-    if source.get('soundfonts') or source.get('sample_buffers'):
-        raise ValueError('Module export currently supports synth-only scores')
+    """The consumer awaits preload(S), then owns tempo and playback."""
     text = export(source)
+    prelude = text[:text.index('const BPM = ')]
+    preload = ('export async function preload(S) {\n'
+               'const {getAudioContext, getFontBufferSource, registerSound} = S;\n'
+               + prelude + '\n}\n')
     body = text[text.index('const BPM = '):].replace('setcpm(BPM / 4);\n', '', 1)
     body = body.replace('\nstack(\n', '\nreturn stack(\n', 1)
     return (f'// slopwave score SHA-256: {digest(source)}\n'
-            f'export const bpm = {source["bpm"]!r};\n'
+            f'export const bpm = {source["bpm"]!r};\n' + preload +
             f'export const beats = {source["beats"]!r};\n'
             'export const cps = bpm / 240;\n'
             'export function createPattern(S) {\n'

@@ -35,6 +35,15 @@ for(let repeat=0;repeat<2;repeat++) {
   const index=remaining.findIndex(h=>Math.abs(h.at-e.at)<2e-5 && Math.abs(h.len-e.len)<2e-5 && h.value.s===sound && (typeof h.value.note==='number'?h.value.note:core.noteToMidi(h.value.note))===e.pitch);
   assert(index>=0,`Missing/mutated ${e.part} ${e.pitch} at ${e.at}`);
   const [h]=remaining.splice(index,1);
+  let controls=core.note('c3');
+  for(const [key,value] of Object.entries(score.voices?.[e.part]??{})) {
+   if(key==='sound') continue;
+   assert.equal(typeof controls[key],'function',`Unsupported control ${key}`);
+   controls=controls[key](value);
+  }
+  for(const [key,value] of Object.entries(controls.queryArc(0,1)[0].value)) {
+   if(key!=='note') assert.deepEqual(h.value[key],value,`Changed ${e.part}.${key}`);
+  }
   const bus=['kick','snare','hat'].includes(e.part)?'drums':e.part;
   const drumScale=e.part==='snare'?(score.drum_mix?.snare??.45):e.part==='hat'?(score.drum_mix?.hat??.20):1;
   assert(Math.abs(h.value.gain-e.level*score.mix[bus]*drumScale)<1e-7,'Gain changed');

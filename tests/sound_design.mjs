@@ -14,6 +14,11 @@ for(const name of ['effects','samples','long']) {
  run(['tools/check.mjs',score,source,module]);
  run(['tools/audio.mjs','render',score,source,root+name+'.wav']);
  run(['tools/audio.mjs','playback',score,source,root+name+'.playback.json']);
+ if(name==='effects') {
+  process.env.SLOPWAVE_TEST_KEYBOARD='1';
+  run(['tools/audio.mjs','render',score,source,root+'keyboard.wav']);
+  delete process.env.SLOPWAVE_TEST_KEYBOARD;
+ }
  if(name==='samples') {
   run(['tools/audio.mjs','render',score,source,root+'module.wav',module]);
   run(['tools/audio.mjs','playback',score,source,root+'module.playback.json',module]);

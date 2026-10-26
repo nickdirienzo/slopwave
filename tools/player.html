@@ -44,7 +44,7 @@ try {
  if(!globalThis.__pattern) throw new Error('Pattern evaluation failed');
  window.__score=score; window.__ready=true;
  const play=async()=>{
-  await S.initAudioOnFirstClick();
+  await S.initAudio();
   await S.getAudioContext().resume();
   if(moduleMode) { repl.setCps(song.cps); await repl.setPattern(globalThis.__pattern, true); }
   else await S.evaluate(code,true);
@@ -53,7 +53,7 @@ try {
   status.textContent='Playing';
  };
  const render=async()=>{
-  await S.initAudioOnFirstClick();
+  await S.initAudio();
   S.hush(); status.textContent='Rendering…';
   const params=new URLSearchParams(location.search);
   const begin=Number(params.get('render_begin')??0);

@@ -1,0 +1,30 @@
+name: Research checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: python -m pip install -e '.[analysis]'
+      - run: python -m unittest discover -s tests
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Original example
+        run: |
+          slopwave validate examples/lantern/score.json
+          slopwave arrange examples/lantern/score.json --profile synth -o build/arranged.json
+          slopwave mix build/arranged.json -o build/mixed.json
+          slopwave export build/mixed.json -o build/lantern.strudel.js
+          cmp examples/lantern/lantern.strudel.js build/lantern.strudel.js
+          npm run check -- build/mixed.json build/lantern.strudel.js
+          npm run render -- build/mixed.json build/lantern.strudel.js build/lantern.wav
+          npm run playback -- build/mixed.json build/lantern.strudel.js build/playback.json

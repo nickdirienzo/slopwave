@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>slopwave</title>
+<style>body{font:18px system-ui;max-width:38rem;margin:4rem auto;padding:1rem}button{font:inherit;padding:.5rem 1rem;margin-right:.5rem}pre{white-space:pre-wrap}</style>
+<h1>slopwave</h1><p id="title">Loading arrangement…</p>
+<button id="play" disabled>Play</button><button id="stop">Stop</button><button id="render" disabled>Download WAV</button>
+<pre id="status"></pre>
+<script type="module">
+import * as S from '/vendor/index.mjs';
+const status=document.querySelector('#status');
+window.__starts=[];
+const start=OscillatorNode.prototype.start;
+OscillatorNode.prototype.start=function(when=0,...args){
+ window.__starts.push({when,calledAt:this.context.currentTime,frequency:this.frequency.value,type:this.type});
+ return start.call(this,when,...args);
+};
+try {
+ const [score,source]=await Promise.all([fetch('/score.json').then(r=>r.json()),fetch('/score.js').then(r=>r.text())]);
+ if(score.soundfonts||score.sample_buffers) throw new Error('Local preview currently supports synthesized arrangements. Use Strudel with the documented sample resources for sampled profiles.');
+ const repl=await S.initStrudel();
+ const code=source.replace('\nstack(\n','\nglobalThis.__pattern = stack(\n');
+ const result=await S.evaluate(code,false);
+ if(!globalThis.__pattern) throw new Error('Pattern evaluation failed');
+ window.__score=score; window.__ready=true;
+ const play=async()=>{
+  await S.getAudioContext().resume();
+  await S.evaluate(code,true);
+  window.__playing=true;
+  window.__context=S.getAudioContext();
+  status.textContent='Playing';
+ };
+ const render=async()=>{
+  S.hush(); status.textContent='Rendering…';
+  await S.renderPatternAudio(globalThis.__pattern,score.bpm/240,0,score.beats/4,44100,64,false,'slopwave');
+  status.textContent='Downloaded WAV. Reload the page to play again.';
+  document.querySelector('#play').disabled=true; document.querySelector('#render').disabled=true;
+ };
+ document.querySelector('#title').textContent=score.title;
+ for(const id of ['play','render']) document.querySelector('#'+id).disabled=false;
+ document.querySelector('#play').onclick=()=>play().catch(e=>{status.textContent=e.message;throw e;});
+ document.querySelector('#stop').onclick=()=>{S.hush();status.textContent='Stopped';};
+ document.querySelector('#render').onclick=()=>render().catch(e=>{status.textContent=e.message;throw e;});
+ window.__stop=()=>S.hush();
+}catch(error){status.textContent=error.message;window.__failure=error.message;throw error;}
+</script></html>

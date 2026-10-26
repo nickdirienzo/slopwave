@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools==75.8.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slopwave"
+version = "0.1.0"
+description = "A research workbench for editable Strudel arrangements"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = {text = "AGPL-3.0-or-later"}
+dependencies = ["numpy==1.26.4", "jsonschema==4.23.0"]
+
+[project.optional-dependencies]
+analysis = ["scipy==1.13.1", "librosa==0.11.0", "soundfile==0.13.1"]
+transcription = ["scipy==1.13.1", "librosa==0.11.0", "soundfile==0.13.1", "basic-pitch==0.4.0", "onnxruntime==1.19.2"]
+stems = ["demucs==4.0.1", "torch==2.8.0", "torchaudio==2.8.0", "soundfile==0.13.1"]
+
+[project.scripts]
+slopwave = "slopwave.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+slopwave = ["*.schema.json"]
